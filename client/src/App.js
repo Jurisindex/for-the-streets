@@ -1,89 +1,115 @@
 import React, { useState, useEffect } from 'react';
+import PoiList from './components/PoiList';
+import PoiForm from './components/PoiForm';
+import OpinionList from './components/OpinionList';
+import OpinionForm from './components/OpinionForm';
 import './App.css';
 
 function App() {
-  const [users, setUsers] = useState([]);
-  const [newUserName, setNewUserName] = useState('');
+  const [pois, setPois] = useState([]);
+  const [opinions, setOpinions] = useState([]);
 
   useEffect(() => {
-    fetchUsers();
+    fetchPois();
+    fetchOpinions();
   }, []);
 
-  const fetchUsers = async () => {
-    const response = await fetch('http://localhost:3001/api/users');
-    const data = await response.json();
-    setUsers(data);
+  const fetchPois = async () => {
+    try {
+      const response = await fetch('/api/poi');
+      const data = await response.json();
+      setPois(data);
+    } catch (error) {
+      console.error('Failed to fetch POIs:', error);
+    }
   };
 
-  const addUser = async (e) => {
-    e.preventDefault();
-    const response = await fetch('http://localhost:3001/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name: newUserName }),
-    });
-    const data = await response.json();
-    setUsers([...users, data]);
-    setNewUserName('');
+  const fetchOpinions = async () => {
+    try {
+      const response = await fetch('/api/opinions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch opinions');
+      }
+      const data = await response.json();
+      setOpinions(data);
+    } catch (error) {
+      console.error('Failed to fetch opinions:', error);
+      setOpinions([]); // Set to empty array in case of error
+    }
   };
 
-  const deleteUser = async (id) => {
-    await fetch(`http://localhost:3001/api/users/${id}`, {
-      method: 'DELETE',
-    });
-    setUsers(users.filter(user => user.id !== id));
+  const addPoi = async (poiData) => {
+    try {
+      const response = await fetch('/api/poi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(poiData),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add POI');
+      }
+      const newPoi = await response.json();
+      setPois(prevPois => [...prevPois, newPoi]);
+      return newPoi;  // Return the new POI
+    } catch (error) {
+      console.error('Failed to add POI:', error);
+      throw error;  // Re-throw the error to be caught in the form
+    }
+  };
+
+  const deletePoi = async (id) => {
+    try {
+      const response = await fetch(`/api/poi/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete POI');
+      }
+      setPois(pois.filter(poi => poi.id !== id));
+      // Also remove related opinions from the state
+      setOpinions(opinions.filter(opinion => opinion.poi_id !== id));
+    } catch (error) {
+      console.error('Failed to delete POI:', error);
+    }
+  };
+
+  const deleteOpinion = async (id) => {
+    try {
+      const response = await fetch(`/api/opinions/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete opinion');
+      }
+      setOpinions(opinions.filter(opinion => opinion.id !== id));
+    } catch (error) {
+      console.error('Failed to delete opinion:', error);
+    }
+  };
+
+  const addOpinion = async (opinionData) => {
+    try {
+      const response = await fetch('/api/opinions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opinionData),
+      });
+      const newOpinion = await response.json();
+      setOpinions([...opinions, newOpinion]);
+    } catch (error) {
+      console.error('Failed to add opinion:', error);
+    }
   };
 
   return (
     <div className="App">
-      <h1>User Management</h1>
-      <form onSubmit={addUser}>
-        <input
-          type="text"
-          value={newUserName}
-          onChange={(e) => setNewUserName(e.target.value)}
-          placeholder="Enter user name"
-        />
-        <button type="submit">Add User</button>
-      </form>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>
-            {user.name}
-            <button onClick={() => deleteUser(user.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+      <h1>Street Review</h1>
+      <PoiForm onSubmit={addPoi} />
+      <PoiList pois={pois} onDelete={deletePoi} />
+      <OpinionForm pois={pois} onSubmit={addOpinion} />
+      <OpinionList opinions={opinions} onDelete={deleteOpinion} />
     </div>
   );
 }
 
 export default App;
-
-// import logo from './logo.svg';
-// import './App.css';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//     </div>
-//   );
-// }
-
-// export default App;

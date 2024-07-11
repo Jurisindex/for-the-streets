@@ -4,10 +4,23 @@
     "description": "P2P post-dating review site",
     "scripts": {
         "start:client": "cd client && npm start",
-        "start:server": "cd server && node server.js",
-        "start": "concurrently \"npm run start:client\" \"npm run start:server\""
+        "build:client": "cd client && npm run build",
+        "start:server": "cd server/src && node server.js",
+        "start:dev": "concurrently \"npm run start:client\" \"npm run start:server\"",
+        "start:prod": "npm run build:client && npm run start:server",
+        "migrate": "node server/src/db/migrationRunner.js"
     },
     "devDependencies": {
         "concurrently": "^6.5.1"
+    },
+    "dependencies": {
+        "bcrypt": "^5.1.1",
+        "express": "^4.19.2",
+        "express-sanitizer": "^1.0.6",
+        "express-validator": "^7.1.0",
+        "node-fetch": "^3.3.2",
+        "sqlite": "^5.1.1",
+        "sqlite3": "^5.1.7",
+        "validator": "^13.12.0"
     }
 }
